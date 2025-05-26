@@ -25,3 +25,4 @@ Diseño responsive: Funciona perfecto en móvil y PC
 🔴 Pasivo Corriente
 🟠 Pasivo No Corriente
 🟣 Fondos Propios
+versión actualizada 260525
