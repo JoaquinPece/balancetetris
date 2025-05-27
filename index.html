@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Balance Tetris - Juego Educativo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: white;
+        }
+        
+        .game-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        }
+        
+        .game-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .game-area {
+            width: 600px;
+            height: 400px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid white;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        
+        .falling-item {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .falling-item:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+        }
+        
+        .categories {
+            display: flex;
+            gap: 10px;
+            justify-content: space-between;
+        }
+        
+        .category {
+            flex: 1;
+            height: 80px;
+            border: 3px dashed rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 12px;
+            font-weight: bold;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .category:hover {
+            border-color: white;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .category.correct {
+            background: rgba(46, 204, 113, 0.6);
+            border-color: #2ecc71;
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(46, 204, 113, 0.5);
+        }
+        
+        .category.wrong {
+            background: rgba(231, 76, 60, 0.6);
+            border-color: #e74c3c;
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(231, 76, 60, 0.5);
+        }
+        
+        .activo-corriente { background-color: #2ecc71; }
+        .activo-no-corriente { background-color: #3498db; }
+        .pasivo-corriente { background-color: #e74c3c; }
+        .pasivo-no-corriente { background-color: #f39c12; }
+        .fondos-propios { background-color: #9b59b6; }
+        
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            display: none;
+        }
+        
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 15px;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <h1>🎮 Balance Tetris</h1>
+            <p>Selecciona la categoría correcta de cada elemento del balance</p>
+        </div>
+        
+        <div class="game-info">
+            <span>Puntuación: <span id="score">0</span></span>
+            <span>Errores: <span id="errors">0</span>/3</span>
+            <span>Nivel: <span id="level">1</span></span>
+        </div>
+        
+        <div class="game-area" id="gameArea">
+            <div class="game-over" id="gameOver">
+                <h2 id="gameOverTitle"></h2>
+                <p id="gameOverMessage"></p>
+                <button class="btn" onclick="resetGame()">Jugar de Nuevo</button>
+            </div>
+        </div>
+        
+        <div class="categories">
+            <div class="category" data-category="activo-no-corriente" onclick="selectCategory('activo-no-corriente')">
+                🔵<br>ACTIVO NO<br>CORRIENTE
+            </div>
+            <div class="category" data-category="activo-corriente" onclick="selectCategory('activo-corriente')">
+                🟢<br>ACTIVO<br>CORRIENTE
+            </div>
+            <div class="category" data-category="fondos-propios" onclick="selectCategory('fondos-propios')">
+                🟣<br>FONDOS<br>PROPIOS
+            </div>
+            <div class="category" data-category="pasivo-no-corriente" onclick="selectCategory('pasivo-no-corriente')">
+                🟠<br>PASIVO NO<br>CORRIENTE
+            </div>
+            <div class="category" data-category="pasivo-corriente" onclick="selectCategory('pasivo-corriente')">
+                🔴<br>PASIVO<br>CORRIENTE
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const balanceItems = {
+            'activo-corriente': [
+                {name: '📦 Existencias', tip: 'Mercaderías, materias primas y productos'},
+                {name: '👥 Clientes', tip: 'Personas que nos deben dinero por ventas'},
+                {name: '🏛️ Bancos', tip: 'Dinero en cuentas bancarias'},
+                {name: '💵 Caja', tip: 'Dinero en efectivo'},
+                {name: '📊 IVA Soportado', tip: 'IVA pagado que podemos recuperar'},
+                {name: '👤 Deudores', tip: 'Otros que nos deben dinero'},
+                {name: '🏛️ H.P. Deudora', tip: 'Hacienda nos debe dinero'},
+                {name: '📋 Efectos a Cobrar', tip: 'Letras de cambio a favor'},
+                {name: '💹 Inversiones Financieras C/P', tip: 'Inversiones a corto plazo'}
+            ],
+            'activo-no-corriente': [
+                {name: '🏢 Inmovilizado Material', tip: 'Bienes físicos duraderos'},
+                {name: '🏞️ Terrenos', tip: 'Solares propiedad de la empresa'},
+                {name: '🏗️ Construcciones', tip: 'Edificios y naves industriales'},
+                {name: '⚙️ Maquinaria', tip: 'Equipos de producción'},
+                {name: '🪑 Mobiliario', tip: 'Muebles de oficina'},
+                {name: '💻 Equipos Informáticos', tip: 'Ordenadores y tecnología'},
+                {name: '🚛 Elementos de Transporte', tip: 'Vehículos de la empresa'},
+                {name: '📈 Inversiones Financieras L/P', tip: 'Inversiones a largo plazo'},
+                {name: '📉 Amortización Acumulada', tip: 'Pérdida de valor acumulada'}
+            ],
+            'pasivo-corriente': [
+                {name: '🏪 Proveedores', tip: 'Deudas por compras a crédito'},
+                {name: '📄 Préstamos C/P', tip: 'Deudas a corto plazo'},
+                {name: '💳 Acreedores', tip: 'Deudas por servicios recibidos'},
+                {name: '📈 IVA Repercutido', tip: 'IVA cobrado a entregar'},
+                {name: '🏛️ H.P. Acreedora', tip: 'Deudas con Hacienda'},
+                {name: '💸 Anticipos de Clientes', tip: 'Pagos adelantados recibidos'},
+                {name: '📋 Efectos a Pagar', tip: 'Letras de cambio en contra'},
+                {name: '👷 Sueldos Pendientes', tip: 'Salarios por pagar'},
+                {name: '🏥 Seguridad Social Acreedora', tip: 'Cotizaciones pendientes'}
+            ],
+            'pasivo-no-corriente': [
+                {name: '📋 Préstamos L/P', tip: 'Deudas a largo plazo'},
+                {name: '📜 Deudas L/P', tip: 'Otras deudas a largo plazo'}
+            ],
+            'fondos-propios': [
+                {name: '💰 Capital Social', tip: 'Aportaciones de socios'},
+                {name: '🏦 Reservas', tip: 'Beneficios no distribuidos'},
+                {name: '📊 Resultado del Ejercicio', tip: 'Beneficio/pérdida del año'}
+            ]
+        };
+
+        let gameState = {
+            score: 0,
+            errors: 0,
+            level: 1,
+            isGameOver: false,
+            currentItem: null,
+            selectedCategory: null,
+            fallSpeed: 3000,
+            currentFallingItem: null
+        };
+
+        // Audio feedback
+        function playSound(type) {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                if (type === 'success') {
+                    // Sonido de éxito (Do-Mi-Sol)
+                    [261.63, 329.63, 392.00].forEach((freq, i) => {
+                        const oscillator = audioContext.createOscillator();
+                        const gainNode = audioContext.createGain();
+                        
+                        oscillator.connect(gainNode);
+                        gainNode.connect(audioContext.destination);
+                        
+                        oscillator.frequency.setValueAtTime(freq, audioContext.currentTime + i * 0.1);
+                        oscillator.type = 'sine';
+                        
+                        gainNode.gain.setValueAtTime(0, audioContext.currentTime + i * 0.1);
+                        gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + i * 0.1 + 0.05);
+                        gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + i * 0.1 + 0.15);
+                        
+                        oscillator.start(audioContext.currentTime + i * 0.1);
+                        oscillator.stop(audioContext.currentTime + i * 0.1 + 0.15);
+                    });
+                } else {
+                    // Sonido de error (notas descendentes)
+                    [200, 150].forEach((freq, i) => {
+                        const oscillator = audioContext.createOscillator();
+                        const gainNode = audioContext.createGain();
+                        
+                        oscillator.connect(gainNode);
+                        gainNode.connect(audioContext.destination);
+                        
+                        oscillator.frequency.setValueAtTime(freq, audioContext.currentTime + i * 0.1);
+                        oscillator.type = 'sawtooth';
+                        
+                        gainNode.gain.setValueAtTime(0, audioContext.currentTime + i * 0.1);
+                        gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + i * 0.1 + 0.05);
+                        gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + i * 0.1 + 0.2);
+                        
+                        oscillator.start(audioContext.currentTime + i * 0.1);
+                        oscillator.stop(audioContext.currentTime + i * 0.1 + 0.2);
+                    });
+                }
+            } catch (error) {
+                console.log('Audio no disponible');
+            }
+        }
+
+        function getAllItems() {
+            const allItems = [];
+            Object.keys(balanceItems).forEach(category => {
+                balanceItems[category].forEach(item => {
+                    allItems.push({...item, category});
+                });
+            });
+            return allItems;
+        }
+
+        function createFallingItem() {
+            if (gameState.isGameOver || gameState.currentFallingItem) return;
+            
+            const allItems = getAllItems();
+            const randomItem = allItems[Math.floor(Math.random() * allItems.length)];
+            
+            const itemElement = document.createElement('div');
+            itemElement.className = `falling-item ${randomItem.category}`;
+            itemElement.textContent = randomItem.name;
+            itemElement.title = randomItem.tip;
+            itemElement.dataset.category = randomItem.category;
+            
+            const gameArea = document.getElementById('gameArea');
+            const maxX = gameArea.clientWidth - 150;
+            itemElement.style.left = Math.random() * maxX + 'px';
+            itemElement.style.top = '0px';
+            
+            gameArea.appendChild(itemElement);
+            gameState.currentFallingItem = {element: itemElement, category: randomItem.category};
+            
+            // Animar caída
+            let position = 0;
+            const fallInterval = setInterval(() => {
+                if (gameState.isGameOver || !gameState.currentFallingItem) {
+                    clearInterval(fallInterval);
+                    return;
+                }
+                
+                position += 1.5;
+                itemElement.style.top = position + 'px';
+                
+                if (position >= gameArea.clientHeight - 20) {
+                    // Item llegó al fondo sin ser clasificado
+                    gameState.errors++;
+                    updateDisplay();
+                    itemElement.remove();
+                    gameState.currentFallingItem = null;
+                    clearInterval(fallInterval);
+                    
+                    if (gameState.errors >= 3) {
+                        endGame();
+                    } else {
+                        setTimeout(createFallingItem, 1000);
+                    }
+                }
+            }, 25);
+        }
+
+        function selectCategory(category) {
+            if (!gameState.currentFallingItem) return;
+            classifyItem(gameState.currentFallingItem.element, gameState.currentFallingItem.category, category);
+        }
+
+        function classifyItem(itemElement, correctCategory, selectedCategory) {
+            if (!itemElement || !itemElement.parentNode) return;
+            
+            if (selectedCategory === correctCategory) {
+                gameState.score += 10;
+                showFeedback(selectedCategory, true); // Ilumina en verde la casilla correcta
+            } else {
+                gameState.errors++;
+                showFeedback(selectedCategory, false); // Ilumina en rojo la casilla incorrecta
+            }
+            
+            itemElement.remove();
+            gameState.currentFallingItem = null;
+            
+            updateDisplay();
+            
+            if (gameState.errors >= 3) {
+                endGame();
+            } else {
+                if (gameState.score > 0 && gameState.score % 100 === 0) {
+                    levelUp();
+                }
+                setTimeout(createFallingItem, 1000);
+            }
+        }
+
+        function showFeedback(category, isCorrect) {
+            const categoryElement = document.querySelector(`[data-category="${category}"]`);
+            
+            if (categoryElement) {
+                // Limpiar clases anteriores
+                categoryElement.classList.remove('correct', 'wrong');
+                
+                if (isCorrect) {
+                    categoryElement.classList.add('correct');
+                } else {
+                    categoryElement.classList.add('wrong');
+                }
+                
+                playSound(isCorrect ? 'success' : 'error');
+                
+                setTimeout(() => {
+                    categoryElement.classList.remove('correct', 'wrong');
+                }, 800);
+            }
+        }
+
+        function levelUp() {
+            gameState.level++;
+            gameState.fallSpeed = Math.max(1500, gameState.fallSpeed - 300);
+        }
+
+        function updateDisplay() {
+            document.getElementById('score').textContent = gameState.score;
+            document.getElementById('errors').textContent = gameState.errors;
+            document.getElementById('level').textContent = gameState.level;
+        }
+
+        function endGame() {
+            gameState.isGameOver = true;
+            
+            if (gameState.currentFallingItem && 
+                gameState.currentFallingItem.element && 
+                gameState.currentFallingItem.element.parentNode) {
+                gameState.currentFallingItem.element.remove();
+            }
+            gameState.currentFallingItem = null;
+            
+            const gameOverDiv = document.getElementById('gameOver');
+            const title = document.getElementById('gameOverTitle');
+            const message = document.getElementById('gameOverMessage');
+            
+            if (gameState.score >= 200) {
+                title.textContent = '🎉 ¡Excelente!';
+                message.textContent = `¡Has dominado el balance! Puntuación: ${gameState.score}`;
+            } else if (gameState.score >= 100) {
+                title.textContent = '👍 ¡Bien hecho!';
+                message.textContent = `Buen trabajo aprendiendo. Puntuación: ${gameState.score}`;
+            } else {
+                title.textContent = '📚 ¡Sigue practicando!';
+                message.textContent = `La práctica hace al maestro. Puntuación: ${gameState.score}`;
+            }
+            
+            gameOverDiv.style.display = 'block';
+        }
+
+        function resetGame() {
+            gameState = {
+                score: 0,
+                errors: 0,
+                level: 1,
+                isGameOver: false,
+                currentItem: null,
+                selectedCategory: null,
+                fallSpeed: 3000,
+                currentFallingItem: null
+            };
+            
+            document.getElementById('gameOver').style.display = 'none';
+            
+            const fallingItems = document.querySelectorAll('.falling-item');
+            if (fallingItems) {
+                fallingItems.forEach(item => {
+                    if (item && item.parentNode) {
+                        item.remove();
+                    }
+                });
+            }
+            
+            const categories = document.querySelectorAll('.category');
+            if (categories) {
+                categories.forEach(cat => {
+                    if (cat) {
+                        cat.classList.remove('correct', 'wrong');
+                        cat.style.boxShadow = '';
+                    }
+                });
+            }
+            
+            updateDisplay();
+            startGame();
+        }
+
+        function startGame() {
+            createFallingItem();
+        }
+
+        // Iniciar el juego
+        updateDisplay();
+        startGame();
+    </script>
+</body>
+</html>
